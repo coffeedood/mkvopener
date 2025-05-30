@@ -1,0 +1,601 @@
+import os
+import urllib.parse
+import subprocess
+from natsort import natsorted
+import string
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from fuzzywuzzy import process
+
+# Maximum length for Windows filenames
+MAX_FILENAME_LENGTH = 215  
+VALID_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
+
+# Path to VLC executable
+VLC_PATH = r"C:\Program Files\VideoLAN\VLC\vlc.exe"
+
+# Folder to store generated .m3u playlists
+PLAYLIST_FOLDER = "playlists"
+os.makedirs(PLAYLIST_FOLDER, exist_ok=True)
+
+class MKVPlaylistGenerator:
+    def __init__(self):
+        self.video_source_dir = ""
+        self.playlist_dest_dir = PLAYLIST_FOLDER
+
+    def set_directories(self, video_source_dir):
+        self.video_source_dir = video_source_dir
+
+    def sanitize_playlist_name(self, name):
+        """Sanitize filenames to only include valid characters."""
+        return ''.join(c for c in name if c in VALID_CHARS).strip()
+
+    def create_mkv_playlists(self):
+        """Recursively scan the source directory for .mkv files and create .m3u playlists."""
+        try:
+            if not os.path.exists(self.video_source_dir) or not os.path.isdir(self.video_source_dir):
+                print(f"Error: Source directory '{self.video_source_dir}' not found.")
+                return False
+
+            if not os.path.exists(self.playlist_dest_dir):
+                os.makedirs(self.playlist_dest_dir)
+
+            mkv_files = []
+
+            # Recursively walk through source directory and subdirectories
+            for root, _, files in os.walk(self.video_source_dir):
+                for file in files:
+                    if file.lower().endswith(".mkv"):
+                        full_path = os.path.abspath(os.path.join(root, file))
+                        mkv_files.append(full_path)
+
+            if not mkv_files:
+                print("No MKV files found.")
+                return False
+
+            # Create a .m3u playlist for each MKV file
+            for file_path in mkv_files:
+                filename = os.path.splitext(os.path.basename(file_path))[0]
+                safe_name = self.sanitize_playlist_name(filename)
+                safe_name = safe_name[:MAX_FILENAME_LENGTH - len(".m3u")]
+                playlist_path = os.path.join(self.playlist_dest_dir, f"{safe_name}.m3u")
+
+                encoded_path = urllib.parse.quote(file_path)
+                playlist_entry = f"file:///{encoded_path}"
+
+                with open(playlist_path, "w", encoding="utf-8") as f:
+                    f.write(f"# Movie: {filename}\n")
+                    f.write(f"{playlist_entry}\n")
+
+                print(f"Written MKV playlist: {playlist_path}")
+
+            return True
+
+        except Exception as e:
+            print(f"Error occurred while creating MKV playlists: {e}")
+            return False
+
+def search_and_open(query):
+    """Search for .m3u files matching the query and open them in VLC."""
+    playlist_files = [f for f in os.listdir(PLAYLIST_FOLDER) if f.endswith(".m3u")]
+    titles = [os.path.splitext(f)[0] for f in playlist_files]
+
+    if not titles:
+        messagebox.showwarning("No Playlists", "No playlists found. Please scan a folder first.")
+        return
+
+    best_match, score = process.extractOne(query, titles)
+    if score < 60:
+        messagebox.showinfo("No Match", f"No close matches found for '{query}'.")
+        return
+
+    playlist_path = os.path.join(PLAYLIST_FOLDER, best_match + ".m3u")
+    try:
+        subprocess.run([VLC_PATH, playlist_path])
+        messagebox.showinfo("Opening", f"Opening: {best_match}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to open playlist in VLC:\n{e}")
+
+# GUI setup
+class MKVPlayerApp:
+    def __init__(self, root):
+        self.root = root
+        self.generator = MKVPlaylistGenerator()
+
+        # GUI elements
+        tk.Button(root, text="Scan Folder for MKVs", command=self.scan_folder).pack(pady=10)
+
+        # New button to choose playlist folder
+        tk.Button(root, text="scan for others", command=self.set_playlist_folder).pack(pady=5)
+
+        self.entry = tk.Entry(root, width=40)
+        self.entry.pack(pady=5)
+        self.entry.insert(0, "")
+
+        # Bind Enter key to the search_movie function
+        self.entry.bind("<Return>", self.search_movie_event)
+
+        tk.Button(root, text="Search and Play", command=self.search_movie).pack(pady=10)
+
+    def scan_folder(self):
+        """Open a folder dialog to scan for MKV files."""
+        folder = filedialog.askdirectory()
+        if not folder:
+            return
+
+        self.generator.set_directories(folder)
+        if self.generator.create_mkv_playlists():
+            messagebox.showinfo("Scan Complete", "Playlists created successfully.")
+
+    def set_playlist_folder(self):
+        #CLOSE MAIN WINDOW TO AUTOHIGHLIGHT PDFS WINDOW
+
+
+        import os
+        import urllib.parse
+        import subprocess
+        from natsort import natsorted
+        import string
+        import tkinter as tk
+        from tkinter import filedialog, messagebox
+        from fuzzywuzzy import process
+
+        # Maximum length for Windows filenames
+        MAX_FILENAME_LENGTH = 215  
+        VALID_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
+
+        # Path to VLC executable
+        VLC_PATH = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
+
+        # Folder to store generated .m3u playlists
+        PLAYLIST_FOLDER = "playlists"
+        os.makedirs(PLAYLIST_FOLDER, exist_ok=True)
+
+        class MKVPlaylistGenerator:
+            def __init__(self):
+                self.video_source_dir = ""
+                self.playlist_dest_dir = PLAYLIST_FOLDER
+
+            def set_directories(self, video_source_dir):
+                self.video_source_dir = video_source_dir
+
+            def sanitize_playlist_name(self, name):
+                """Sanitize filenames to only include valid characters."""
+                return ''.join(c for c in name if c in VALID_CHARS).strip()
+
+            def create_mkv_playlists(self):
+                """Recursively scan the source directory for .mkv files and create .m3u playlists."""
+                try:
+                    if not os.path.exists(self.video_source_dir) or not os.path.isdir(self.video_source_dir):
+                        print(f"Error: Source directory '{self.video_source_dir}' not found.")
+                        return False
+
+                    if not os.path.exists(self.playlist_dest_dir):
+                        os.makedirs(self.playlist_dest_dir)
+
+                    mkv_files = []
+
+                    # Recursively walk through source directory and subdirectories
+                    for root, _, files in os.walk(self.video_source_dir):
+                        for file in files:
+                            if file.lower().endswith(".mkv"):
+                                full_path = os.path.abspath(os.path.join(root, file))
+                                mkv_files.append(full_path)
+
+                    if not mkv_files:
+                        print("No MKV files found.")
+                        return False
+
+                    # Create a .m3u playlist for each MKV file
+                    for file_path in mkv_files:
+                        filename = os.path.splitext(os.path.basename(file_path))[0]
+                        safe_name = self.sanitize_playlist_name(filename)
+                        safe_name = safe_name[:MAX_FILENAME_LENGTH - len(".m3u")]
+                        playlist_path = os.path.join(self.playlist_dest_dir, f"{safe_name}mkv.m3u")
+
+                        encoded_path = urllib.parse.quote(file_path)
+                        playlist_entry = f"file:///{encoded_path}"
+
+                        with open(playlist_path, "w", encoding="utf-8") as f:
+                            f.write(f"# Movie: {filename}\n")
+                            f.write(f"{playlist_entry}\n")
+
+                        print(f"Written MKV playlist: {playlist_path}")
+
+                    return True
+
+                except Exception as e:
+                    print(f"Error occurred while creating MKV playlists: {e}")
+                    return False
+
+        def search_and_open(query):
+            """Search for .m3u files matching the query and open them in VLC."""
+            playlist_files = [f for f in os.listdir(PLAYLIST_FOLDER) if f.endswith(".m3u")]
+            titles = [os.path.splitext(f)[0] for f in playlist_files]
+
+            if not titles:
+                messagebox.showwarning("No Playlists", "No playlists found. Please scan a folder first.")
+                return
+
+            best_match, score = process.extractOne(query, titles)
+            if score < 60:
+                messagebox.showinfo("No Match", f"No close matches found for '{query}'.")
+                return
+
+            playlist_path = os.path.join(PLAYLIST_FOLDER, best_match + ".m3u")
+            try:
+                subprocess.run([VLC_PATH, playlist_path])
+                messagebox.showinfo("Opening", f"Opening: {best_match}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to open playlist in VLC:\n{e}")
+
+        # GUI setup
+        class MKVPlayerApp:
+            def __init__(self, root):
+                self.root = root
+                self.generator = MKVPlaylistGenerator()
+
+                # GUI elements
+                tk.Button(root, text="Scan Folder for MKVs", command=self.scan_folder).pack(pady=10)
+
+                tk.Button(root, text="Scan Folder for mp4", command=self.scan_folder2).pack(pady=10)
+
+
+                # New button to choose playlist folder
+                tk.Button(root, text="Scan Folder for pdfs", command=self.set_playlist_folder).pack(pady=5)
+
+                self.entry = tk.Entry(root, width=40)
+                self.entry.pack(pady=5)
+                self.entry.insert(0, "")
+
+                tk.Button(root, text="Search and Play", command=self.search_movie).pack(pady=10)
+
+            def scan_folder(self):
+                """Open a folder dialog to scan for MKV files."""
+                folder = filedialog.askdirectory()
+                if not folder:
+                    return
+
+                self.generator.set_directories(folder)
+                if self.generator.create_mkv_playlists():
+                    messagebox.showinfo("Scan Complete", "Playlists created successfully.")
+
+            def scan_folder2(self):
+                import os
+                import urllib.parse
+                import subprocess
+                from natsort import natsorted
+                import string
+                import tkinter as tk
+                from tkinter import filedialog, messagebox
+                from fuzzywuzzy import process
+
+                # Maximum length for Windows filenames
+                MAX_FILENAME_LENGTH = 215  
+                VALID_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
+
+                # Path to VLC executable
+                VLC_PATH = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
+
+                # Folder to store generated .m3u playlists
+                PLAYLIST_FOLDER = "playlists"
+                os.makedirs(PLAYLIST_FOLDER, exist_ok=True)
+
+                class mp4PlaylistGenerator:
+                    def __init__(self):
+                        self.video_source_dir = ""
+                        self.playlist_dest_dir = PLAYLIST_FOLDER
+
+                    def set_directories(self, video_source_dir):
+                        self.video_source_dir = video_source_dir
+
+                    def sanitize_playlist_name(self, name):
+                        """Sanitize filenames to only include valid characters."""
+                        return ''.join(c for c in name if c in VALID_CHARS).strip()
+
+                    def create_mp4_playlists(self):
+                        """Recursively scan the source directory for .mp4 files and create .m3u playlists."""
+                        try:
+                            if not os.path.exists(self.video_source_dir) or not os.path.isdir(self.video_source_dir):
+                                print(f"Error: Source directory '{self.video_source_dir}' not found.")
+                                return False
+
+                            if not os.path.exists(self.playlist_dest_dir):
+                                os.makedirs(self.playlist_dest_dir)
+
+                            mp4_files = []
+
+                            # Recursively walk through source directory and subdirectories
+                            for root, _, files in os.walk(self.video_source_dir):
+                                for file in files:
+                                    if file.lower().endswith(".mp4"):
+                                        full_path = os.path.abspath(os.path.join(root, file))
+                                        mp4_files.append(full_path)
+
+                            if not mp4_files:
+                                print("No mp4 files found.")
+                                return False
+
+                            # Create a .m3u playlist for each mp4 file
+                            for file_path in mp4_files:
+                                filename = os.path.splitext(os.path.basename(file_path))[0]
+                                safe_name = self.sanitize_playlist_name(filename)
+                                safe_name = safe_name[:MAX_FILENAME_LENGTH - len(".m3u")]
+                                playlist_path = os.path.join(self.playlist_dest_dir, f"{safe_name}.m3u")
+
+                                encoded_path = urllib.parse.quote(file_path)
+                                playlist_entry = f"file:///{encoded_path}"
+
+                                with open(playlist_path, "w", encoding="utf-8") as f:
+                                    f.write(f"# Movie: {filename}\n")
+                                    f.write(f"{playlist_entry}\n")
+
+                                print(f"Written mp4 playlist: {playlist_path}")
+
+                            return True
+
+                        except Exception as e:
+                            print(f"Error occurred while creating mp4 playlists: {e}")
+                            return False
+
+                def search_and_open(query):
+                    """Search for .m3u files matching the query and open them in VLC."""
+                    playlist_files = [f for f in os.listdir(PLAYLIST_FOLDER) if f.endswith(".m3u")]
+                    titles = [os.path.splitext(f)[0] for f in playlist_files]
+
+                    if not titles:
+                        messagebox.showwarning("No Playlists", "No playlists found. Please scan a folder first.")
+                        return
+
+                    best_match, score = process.extractOne(query, titles)
+                    if score < 60:
+                        messagebox.showinfo("No Match", f"No close matches found for '{query}'.")
+                        return
+
+                    playlist_path = os.path.join(PLAYLIST_FOLDER, best_match + ".m3u")
+                    try:
+                        subprocess.run([VLC_PATH, playlist_path])
+                        messagebox.showinfo("Opening", f"Opening: {best_match}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to open playlist in VLC:\n{e}")
+
+                # GUI setup
+                class mp4PlayerApp:
+                    def __init__(self, root):
+                        self.root = root
+                        self.generator = mp4PlaylistGenerator()
+
+                        # GUI elements
+                        tk.Button(root, text="Scan Folder for mp4s", command=self.scan_folder).pack(pady=10)
+
+                        # New button to choose playlist folder
+                        tk.Button(root, text="Set Playlist Folder", command=self.set_playlist_folder).pack(pady=5)
+
+                        self.entry = tk.Entry(root, width=40)
+                        self.entry.pack(pady=5)
+                        self.entry.insert(0, "")
+
+                        tk.Button(root, text="Search and Play", command=self.search_movie).pack(pady=10)
+
+                    def scan_folder(self):
+                        """Open a folder dialog to scan for mp4 files."""
+                        folder = filedialog.askdirectory()
+                        if not folder:
+                            return
+
+                        self.generator.set_directories(folder)
+                        if self.generator.create_mp4_playlists():
+                            messagebox.showinfo("Scan Complete", "Playlists created successfully.")
+
+                    def set_playlist_folder(self):
+                        """Let the user choose the playlist destination folder."""
+                        folder = filedialog.askdirectory()
+                        if not folder:
+                            return
+
+                        self.generator.playlist_dest_dir = folder
+                        messagebox.showinfo("Playlist Folder Set", f"Playlists will be saved to:\n{folder}")
+
+                    def search_movie(self):
+                        """Search for the movie in the playlists and open it."""
+                        query = self.entry.get()
+                        if not query:
+                            messagebox.showwarning("Input Needed", "Please enter a movie title.")
+                            return
+                        search_and_open(query)
+
+
+                # Start the GUI
+                if __name__ == "__main__":
+                    root = tk.Tk()
+                    root.title("mp4 Playlist Player")
+                    app = mp4PlayerApp(root)
+                    root.mainloop()
+
+
+            def set_playlist_folder(self):
+                import os
+                import subprocess
+                import string
+                import tkinter as tk
+                from tkinter import filedialog, messagebox
+                from fuzzywuzzy import process
+                import sqlite3
+
+                # Maximum length for Windows filenames
+                MAX_FILENAME_LENGTH = 215
+                VALID_CHARS = f"-_.() {string.ascii_letters}{string.digits}"
+
+                DB_FILE = "pdf_files.db"
+
+                class PDFScanner:
+                    def __init__(self):
+                        self.pdf_files = []
+                        self.source_dir = ""
+                        self.conn = sqlite3.connect(DB_FILE)
+                        self.create_table()
+                        self.load_from_db()
+
+                    def create_table(self):
+                        """Create the database table if it doesn't exist."""
+                        with self.conn:
+                            self.conn.execute("""
+                                CREATE TABLE IF NOT EXISTS pdfs (
+                                    id INTEGER PRIMARY KEY,
+                                    filepath TEXT UNIQUE
+                                )
+                            """)
+
+                    def load_from_db(self):
+                        """Load saved PDFs from the database."""
+                        cursor = self.conn.cursor()
+                        cursor.execute("SELECT filepath FROM pdfs")
+                        rows = cursor.fetchall()
+                        self.pdf_files = [row[0] for row in rows]
+                        print(f"Loaded {len(self.pdf_files)} PDFs from database.")
+
+                    def save_to_db(self):
+                        """Save current PDF list to the database."""
+                        with self.conn:
+                            self.conn.execute("DELETE FROM pdfs")  # Clear previous entries
+                            for path in self.pdf_files:
+                                self.conn.execute("INSERT OR IGNORE INTO pdfs (filepath) VALUES (?)", (path,))
+                        print("Saved PDFs to database.")
+
+                    def set_directory(self, source_dir):
+                        """Set the source directory and scan for PDFs."""
+                        self.source_dir = source_dir
+                        self.scan_pdfs()
+
+                    def scan_pdfs(self):
+                        """Recursively scan for PDF files and save to database."""
+                        self.pdf_files.clear()
+
+                        if not os.path.exists(self.source_dir) or not os.path.isdir(self.source_dir):
+                            print(f"Error: Source directory '{self.source_dir}' not found.")
+                            return False
+
+                        for root, _, files in os.walk(self.source_dir):
+                            for file in files:
+                                if file.lower().endswith(".pdf"):
+                                    full_path = os.path.abspath(os.path.join(root, file))
+                                    self.pdf_files.append(full_path)
+
+                        if not self.pdf_files:
+                            print("No PDF files found.")
+                            return False
+
+                        print(f"Found {len(self.pdf_files)} PDFs.")
+                        self.save_to_db()
+                        return True
+
+                    def sanitize_name(self, name):
+                        """Sanitize filenames to only include valid characters."""
+                        return ''.join(c for c in name if c in VALID_CHARS).strip()
+
+                    def get_titles(self):
+                        """Return a list of sanitized filenames without extensions."""
+                        return [self.sanitize_name(os.path.splitext(os.path.basename(f))[0]) for f in self.pdf_files]
+
+                def search_and_open_pdf(query, scanner):
+                    """Search for PDFs matching the query and open the best match."""
+                    titles = scanner.get_titles()
+
+                    if not titles:
+                        messagebox.showwarning("No PDFs", "No PDFs found. Please scan a folder first.")
+                        return
+
+                    best_match, score = process.extractOne(query, titles)
+                    if score < 60:
+                        messagebox.showinfo("No Match", f"No close matches found for '{query}'.")
+                        return
+
+                    # Find the corresponding full path
+                    index = titles.index(best_match)
+                    pdf_path = scanner.pdf_files[index]
+
+                    try:
+                        os.startfile(pdf_path)  # Open with default PDF reader (Windows only)
+                        # Removed: messagebox.showinfo("Opening", f"Opening: {best_match}")
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to open PDF:\n{e}")
+
+                # GUI setup
+                class PDFPlayerApp:
+                    def __init__(self, root):
+                        self.root = root
+                        self.scanner = PDFScanner()
+
+                        tk.Button(root, text="Scan Folder for PDFs", command=self.scan_folder).pack(pady=10)
+
+                        self.entry = tk.Entry(root, width=40)
+                        self.entry.pack(pady=5)
+                        self.entry.insert(0, "")
+                        self.entry.bind("<Return>", self.search_pdf)  # Bind Enter key
+
+                        tk.Button(root, text="Search and Open PDF", command=self.search_pdf).pack(pady=10)
+
+                    def scan_folder(self):
+                        """Open a folder dialog to scan for PDF files."""
+                        folder = filedialog.askdirectory()
+                        if not folder:
+                            return
+
+                        if self.scanner.set_directory(folder):
+                            messagebox.showinfo("Scan Complete", "PDFs scanned and saved successfully.")
+
+                    def search_pdf(self, event=None):  # Accept event parameter for key binding
+                        """Search for the PDF and open it."""
+                        query = self.entry.get()
+                        if not query:
+                            messagebox.showwarning("Input Needed", "Please enter a PDF title.")
+                            return
+                        search_and_open_pdf(query, self.scanner)
+
+                # Start the GUI
+                if __name__ == "__main__":
+                    root = tk.Tk()
+                    root.title("PDF Search and Open")
+                    app = PDFPlayerApp(root)
+                    root.mainloop()
+
+
+                
+
+
+
+
+            def search_movie(self):
+                """Search for the movie in the playlists and open it."""
+                query = self.entry.get()
+                if not query:
+                    messagebox.showwarning("Input Needed", "Please enter a movie title.")
+                    return
+                search_and_open(query)
+
+
+        # Start the GUI
+        if __name__ == "__main__":
+            root = tk.Tk()
+            root.title("MKV Playlist Player")
+            app = MKVPlayerApp(root)
+            root.mainloop()
+
+    def search_movie(self):
+        """Search for the movie in the playlists and open it."""
+        query = self.entry.get()
+        if not query:
+            messagebox.showwarning("Input Needed", "Please enter a movie title.")
+            return
+        search_and_open(query)
+
+    def search_movie_event(self, event):
+        """Search when Enter key is pressed."""
+        self.search_movie()
+
+# Start the GUI
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("MKV Playlist Player")
+    app = MKVPlayerApp(root)
+    root.mainloop()
